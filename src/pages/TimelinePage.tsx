@@ -18,7 +18,7 @@ const TimelinePage = () => {
   const [notes, setNotes] = useState<NoteWithPerson[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { isRecording, duration, audioBlob, startRecording, stopRecording, cancelRecording, analyserNode } = useVoiceRecorder();
+  const { isRecording, duration, result, startRecording, stopRecording, cancelRecording, analyserNode } = useVoiceRecorder();
   const { processVoiceNote, processing } = useProcessVoiceNote();
 
   const fetchNotes = async () => {
