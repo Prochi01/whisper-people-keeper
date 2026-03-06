@@ -18,7 +18,7 @@ const HomePage = () => {
   const [people, setPeople] = useState<Tables<'people'>[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { isRecording, duration, audioBlob, startRecording, stopRecording, cancelRecording, analyserNode } = useVoiceRecorder();
+  const { isRecording, duration, result, startRecording, stopRecording, cancelRecording, analyserNode } = useVoiceRecorder();
   const { processVoiceNote, processing } = useProcessVoiceNote();
 
   const fetchPeople = async () => {
