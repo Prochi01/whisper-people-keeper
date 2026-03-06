@@ -36,12 +36,12 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-    if (audioBlob) {
-      processVoiceNote(audioBlob).then((result) => {
-        if (result) fetchPeople();
+    if (result) {
+      processVoiceNote(result.audioBlob, result.transcript).then((data) => {
+        if (data) fetchPeople();
       });
     }
-  }, [audioBlob]);
+  }, [result]);
 
   const handleRecord = async () => {
     try {

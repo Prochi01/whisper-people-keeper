@@ -35,12 +35,12 @@ const PersonPage = () => {
   useEffect(() => { fetchData(); }, [id]);
 
   useEffect(() => {
-    if (audioBlob) {
-      processVoiceNote(audioBlob).then((result) => {
-        if (result) fetchData();
+    if (result) {
+      processVoiceNote(result.audioBlob, result.transcript).then((data) => {
+        if (data) fetchData();
       });
     }
-  }, [audioBlob]);
+  }, [result]);
 
   const handleRecord = async () => {
     try { await startRecording(); } catch {}

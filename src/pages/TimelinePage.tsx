@@ -33,12 +33,12 @@ const TimelinePage = () => {
   useEffect(() => { fetchNotes(); }, []);
 
   useEffect(() => {
-    if (audioBlob) {
-      processVoiceNote(audioBlob).then((result) => {
-        if (result) fetchNotes();
+    if (result) {
+      processVoiceNote(result.audioBlob, result.transcript).then((data) => {
+        if (data) fetchNotes();
       });
     }
-  }, [audioBlob]);
+  }, [result]);
 
   const handleRecord = async () => {
     try { await startRecording(); } catch {}
