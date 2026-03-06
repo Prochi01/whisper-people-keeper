@@ -3,23 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
-interface ExtractedData {
-  name: string;
-  company?: string;
-  location?: string;
-  interests?: string[];
-  life_events?: string[];
-  meeting_context?: string;
-  notes?: string;
-}
-
 export const useProcessVoiceNote = () => {
   const [processing, setProcessing] = useState(false);
   const { user } = useAuth();
 
-  const processVoiceNote = useCallback(async (audioBlob: Blob) => {
+  const processVoiceNote = useCallback(async (audioBlob: Blob, transcript: string) => {
     if (!user) {
       toast.error('You must be logged in');
+      return null;
+    }
+
+    if (!transcript) {
+      toast.error('No speech detected. Please try again.');
       return null;
     }
 
@@ -32,17 +27,14 @@ export const useProcessVoiceNote = () => {
         .from('voice-recordings')
         .upload(fileName, audioBlob);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        // Continue even if upload fails - transcript is more important
+      }
 
-      // Convert blob to base64
-      const arrayBuffer = await audioBlob.arrayBuffer();
-      const base64Audio = btoa(
-        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-      );
-
-      // Send to edge function for transcription + extraction
+      // Send transcript to edge function for AI extraction
       const { data, error } = await supabase.functions.invoke('process-voice-note', {
-        body: { audio: base64Audio, audioUrl: fileName },
+        body: { transcript, audioUrl: fileName },
       });
 
       if (error) throw error;
