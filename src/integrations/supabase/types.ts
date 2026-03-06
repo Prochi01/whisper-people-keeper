@@ -14,7 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      people: {
+        Row: {
+          ai_summary: string | null
+          company: string | null
+          created_at: string
+          id: string
+          interests: string[] | null
+          last_interaction: string
+          life_events: string[] | null
+          location: string | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          company?: string | null
+          created_at?: string
+          id?: string
+          interests?: string[] | null
+          last_interaction?: string
+          life_events?: string[] | null
+          location?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          company?: string | null
+          created_at?: string
+          id?: string
+          interests?: string[] | null
+          last_interaction?: string
+          life_events?: string[] | null
+          location?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      voice_notes: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          extracted_data: Json | null
+          id: string
+          meeting_context: string | null
+          person_id: string | null
+          raw_transcript: string | null
+          transcript: string | null
+          user_id: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          extracted_data?: Json | null
+          id?: string
+          meeting_context?: string | null
+          person_id?: string | null
+          raw_transcript?: string | null
+          transcript?: string | null
+          user_id: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          extracted_data?: Json | null
+          id?: string
+          meeting_context?: string | null
+          person_id?: string | null
+          raw_transcript?: string | null
+          transcript?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_notes_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
