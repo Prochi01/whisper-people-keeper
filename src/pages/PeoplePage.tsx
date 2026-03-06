@@ -17,7 +17,7 @@ const PeoplePage = () => {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const { isRecording, duration, audioBlob, startRecording, stopRecording, cancelRecording, analyserNode } = useVoiceRecorder();
+  const { isRecording, duration, result, startRecording, stopRecording, cancelRecording, analyserNode } = useVoiceRecorder();
   const { processVoiceNote, processing } = useProcessVoiceNote();
 
   const fetchPeople = async () => {
