@@ -71,7 +71,7 @@ const AppContent = () => {
 
       <Routes>
         <Route path="/" element={<HomePage refreshKey={refreshKey} />} />
-        <Route path="/person/:id" element={<PersonPage onRecord={handleRecord} />} />
+        <Route path="/person/:id" element={<PersonPage />} />
         <Route path="/people" element={<PeoplePage refreshKey={refreshKey} />} />
         <Route path="/timeline" element={<TimelinePage refreshKey={refreshKey} />} />
         <Route path="*" element={<NotFound />} />
