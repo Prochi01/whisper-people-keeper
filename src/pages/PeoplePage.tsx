@@ -1,24 +1,20 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Plus } from 'lucide-react';
 import PersonCard from '@/components/PersonCard';
-import FloatingRecordButton from '@/components/FloatingRecordButton';
-import RecordingOverlay from '@/components/RecordingOverlay';
-import ProcessingOverlay from '@/components/ProcessingOverlay';
-import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
-import { useProcessVoiceNote } from '@/hooks/useProcessVoiceNote';
+import AddPersonScreen from '@/components/AddPersonScreen';
 
-const PeoplePage = () => {
-  const navigate = useNavigate();
+interface PeoplePageProps {
+  refreshKey?: number;
+}
+
+const PeoplePage = ({ refreshKey }: PeoplePageProps) => {
   const [people, setPeople] = useState<Tables<'people'>[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-
-  const { isRecording, duration, result, startRecording, stopRecording, cancelRecording, analyserNode } = useVoiceRecorder();
-  const { processVoiceNote, processing } = useProcessVoiceNote();
+  const [showAdd, setShowAdd] = useState(false);
 
   const fetchPeople = async () => {
     const { data } = await supabase
@@ -29,19 +25,7 @@ const PeoplePage = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchPeople(); }, []);
-
-  useEffect(() => {
-    if (result) {
-      processVoiceNote(result.audioBlob, result.transcript).then((data) => {
-        if (data) fetchPeople();
-      });
-    }
-  }, [result]);
-
-  const handleRecord = async () => {
-    try { await startRecording(); } catch {}
-  };
+  useEffect(() => { fetchPeople(); }, [refreshKey]);
 
   const filtered = people.filter(p => {
     const q = search.toLowerCase();
@@ -54,19 +38,23 @@ const PeoplePage = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background safe-bottom">
-      <RecordingOverlay isRecording={isRecording} duration={duration} analyserNode={analyserNode} onStop={stopRecording} onCancel={cancelRecording} />
-      <ProcessingOverlay processing={processing} />
+    <div className="min-h-screen bg-background pb-24">
+      <AnimatePresence>
+        {showAdd && (
+          <AddPersonScreen onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); fetchPeople(); }} />
+        )}
+      </AnimatePresence>
 
-      <header className="px-5 pt-6 pb-4">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm">Home</span>
-        </button>
+      <header className="px-5 pt-6 pb-4 flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold text-foreground">People</h1>
+        <button
+          onClick={() => setShowAdd(true)}
+          className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center"
+        >
+          <Plus className="w-5 h-5" />
+        </button>
       </header>
 
-      {/* Search */}
       <div className="px-5 mb-4">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -80,7 +68,7 @@ const PeoplePage = () => {
         </div>
       </div>
 
-      <div className="px-5 pb-24">
+      <div className="px-5">
         {loading ? (
           <div className="space-y-3">
             {[0, 1, 2, 3].map(i => <div key={i} className="h-20 bg-muted rounded-xl animate-pulse" />)}
@@ -91,14 +79,10 @@ const PeoplePage = () => {
           </p>
         ) : (
           <div className="space-y-3">
-            {filtered.map((person, i) => (
-              <PersonCard key={person.id} person={person} index={i} />
-            ))}
+            {filtered.map((person, i) => <PersonCard key={person.id} person={person} index={i} />)}
           </div>
         )}
       </div>
-
-      {!isRecording && !processing && <FloatingRecordButton onClick={handleRecord} />}
     </div>
   );
 };
