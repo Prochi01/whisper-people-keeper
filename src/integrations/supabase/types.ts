@@ -25,6 +25,7 @@ export type Database = {
           life_events: string[] | null
           location: string | null
           name: string
+          nudges: Json | null
           updated_at: string
           user_id: string
         }
@@ -38,6 +39,7 @@ export type Database = {
           life_events?: string[] | null
           location?: string | null
           name: string
+          nudges?: Json | null
           updated_at?: string
           user_id: string
         }
@@ -51,6 +53,7 @@ export type Database = {
           life_events?: string[] | null
           location?: string | null
           name?: string
+          nudges?: Json | null
           updated_at?: string
           user_id?: string
         }
@@ -59,6 +62,7 @@ export type Database = {
       voice_notes: {
         Row: {
           audio_url: string | null
+          auto_nudges: Json | null
           created_at: string
           extracted_data: Json | null
           id: string
@@ -70,6 +74,7 @@ export type Database = {
         }
         Insert: {
           audio_url?: string | null
+          auto_nudges?: Json | null
           created_at?: string
           extracted_data?: Json | null
           id?: string
@@ -81,6 +86,7 @@ export type Database = {
         }
         Update: {
           audio_url?: string | null
+          auto_nudges?: Json | null
           created_at?: string
           extracted_data?: Json | null
           id?: string
