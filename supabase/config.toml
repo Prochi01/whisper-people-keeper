@@ -2,3 +2,9 @@ project_id = "zqyrvywwlsqpltbcvecp"
 
 [functions.process-voice-note]
 verify_jwt = false
+
+[functions.transcribe]
+verify_jwt = false
+
+[functions.save-memory]
+verify_jwt = false

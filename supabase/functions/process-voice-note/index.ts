@@ -29,7 +29,9 @@ serve(async (req) => {
 
     if (!transcript) throw new Error("No transcript provided");
 
-    // Use Lovable AI for structured extraction
+    const today = new Date().toISOString().split("T")[0];
+
+    // Use Lovable AI for structured extraction with nudge detection
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -41,11 +43,12 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a personal relationship memory assistant. Extract structured information about people from voice note transcripts. The transcript may be in any language - extract information regardless of language. Proper nouns (names, places, companies) should be preserved as-is, not translated.`
+            content: `You are a personal relationship memory assistant. Extract structured information about people from voice note transcripts. The transcript may be in any language - extract information regardless of language. Proper nouns (names, places, companies) should be preserved as-is, not translated.
+Today's date is ${today}.`
           },
           {
             role: "user",
-            content: `Extract structured information from this voice note transcript:\n\n"${transcript}"\n\nExtract the person's details as JSON.`
+            content: `Extract structured information from this voice note transcript:\n\n"${transcript}"\n\nExtract the person's details including any follow-up nudges.`
           }
         ],
         tools: [
@@ -53,7 +56,7 @@ serve(async (req) => {
             type: "function",
             function: {
               name: "extract_person_data",
-              description: "Extract structured person data from a voice note transcript",
+              description: "Extract structured person data and follow-up nudges from a voice note transcript",
               parameters: {
                 type: "object",
                 properties: {
@@ -63,8 +66,23 @@ serve(async (req) => {
                   interests: { type: "array", items: { type: "string" }, description: "Hobbies, interests, passions" },
                   life_events: { type: "array", items: { type: "string" }, description: "Notable life events mentioned" },
                   meeting_context: { type: "string", description: "Where/how they met" },
-                  notes: { type: "string", description: "Any other notable details" },
-                  summary: { type: "string", description: "A 1-2 sentence summary for quick recall" }
+                  notes: { type: "string", description: "The full original transcript preserved in original language" },
+                  summary: { type: "string", description: "A 1-2 sentence summary for quick recall" },
+                  nudges: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        date: { type: "string", description: "Human readable date like '1 January 2026'" },
+                        isoDate: { type: "string", description: "ISO 8601 date string" },
+                        note: { type: "string", description: "Short reminder label e.g. 'Follow up on the hiring'" },
+                        auto: { type: "boolean", description: "Always true for auto-detected nudges" }
+                      },
+                      required: ["date", "isoDate", "note", "auto"],
+                      additionalProperties: false
+                    },
+                    description: "Follow-up nudges. Only add if transcript contains BOTH a future time reference AND a context signal (hiring, fundraise, launch, move, pregnancy, wedding, deal, health, birthday, event). Calculate exact date from today."
+                  }
                 },
                 required: ["name"],
                 additionalProperties: false
@@ -99,72 +117,18 @@ serve(async (req) => {
 
     const extracted = JSON.parse(toolCall.function.arguments);
     const personName = extracted.name || "Unknown";
+    const autoNudges = extracted.nudges || [];
 
-    // Check if person already exists (fuzzy match by name)
-    const { data: existingPeople } = await supabase
-      .from("people")
-      .select("*")
-      .eq("user_id", user.id)
-      .ilike("name", `%${personName}%`);
-
-    let personId: string;
-
-    if (existingPeople && existingPeople.length > 0) {
-      // Update existing person
-      const existing = existingPeople[0];
-      const mergedInterests = [...new Set([...(existing.interests || []), ...(extracted.interests || [])])];
-      const mergedLifeEvents = [...new Set([...(existing.life_events || []), ...(extracted.life_events || [])])];
-
-      const { error: updateError } = await supabase
-        .from("people")
-        .update({
-          company: extracted.company || existing.company,
-          location: extracted.location || existing.location,
-          interests: mergedInterests,
-          life_events: mergedLifeEvents,
-          ai_summary: extracted.summary || existing.ai_summary,
-          last_interaction: new Date().toISOString(),
-        })
-        .eq("id", existing.id);
-
-      if (updateError) throw updateError;
-      personId = existing.id;
-    } else {
-      // Create new person
-      const { data: newPerson, error: insertError } = await supabase
-        .from("people")
-        .insert({
-          user_id: user.id,
-          name: personName,
-          company: extracted.company || null,
-          location: extracted.location || null,
-          interests: extracted.interests || [],
-          life_events: extracted.life_events || [],
-          ai_summary: extracted.summary || null,
-        })
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-      personId = newPerson.id;
-    }
-
-    // Create voice note
-    const { error: noteError } = await supabase
-      .from("voice_notes")
-      .insert({
-        user_id: user.id,
-        person_id: personId,
-        transcript: transcript,
-        audio_url: audioUrl || null,
-        extracted_data: extracted,
-        meeting_context: extracted.meeting_context || null,
-      });
-
-    if (noteError) throw noteError;
-
+    // Return extracted data for review (don't save yet)
     return new Response(
-      JSON.stringify({ success: true, person_id: personId, person_name: personName, extracted }),
+      JSON.stringify({ 
+        success: true, 
+        extracted,
+        person_name: personName,
+        auto_nudges: autoNudges,
+        transcript,
+        audioUrl 
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

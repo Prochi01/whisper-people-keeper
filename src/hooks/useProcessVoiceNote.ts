@@ -3,18 +3,41 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
+export interface ExtractedData {
+  name: string;
+  company?: string | null;
+  location?: string | null;
+  interests?: string[];
+  life_events?: string[];
+  meeting_context?: string | null;
+  notes?: string;
+  summary?: string;
+  nudges?: AutoNudge[];
+}
+
+export interface AutoNudge {
+  date: string;
+  isoDate: string;
+  note: string;
+  auto: boolean;
+}
+
+export interface ReviewData {
+  extracted: ExtractedData;
+  person_name: string;
+  auto_nudges: AutoNudge[];
+  transcript: string;
+  audioUrl: string | null;
+}
+
 export const useProcessVoiceNote = () => {
   const [processing, setProcessing] = useState(false);
+  const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const { user } = useAuth();
 
-  const processVoiceNote = useCallback(async (audioBlob: Blob, transcript: string) => {
+  const transcribeAndExtract = useCallback(async (audioBlob: Blob) => {
     if (!user) {
       toast.error('You must be logged in');
-      return null;
-    }
-
-    if (!transcript) {
-      toast.error('No speech detected. Please try again.');
       return null;
     }
 
@@ -23,24 +46,46 @@ export const useProcessVoiceNote = () => {
     try {
       // Upload audio
       const fileName = `${user.id}/${Date.now()}.webm`;
-      const { error: uploadError } = await supabase.storage
-        .from('voice-recordings')
-        .upload(fileName, audioBlob);
+      await supabase.storage.from('voice-recordings').upload(fileName, audioBlob);
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        // Continue even if upload fails - transcript is more important
+      // Transcribe with Whisper
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'audio.webm');
+
+      const transcribeUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe`;
+      const transcribeRes = await fetch(transcribeUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: formData,
+      });
+
+      if (!transcribeRes.ok) throw new Error('Transcription failed');
+      const { transcript } = await transcribeRes.json();
+
+      if (!transcript) {
+        toast.error('No speech detected. Please try again.');
+        return null;
       }
 
-      // Send transcript to edge function for AI extraction
+      // Extract with Lovable AI
       const { data, error } = await supabase.functions.invoke('process-voice-note', {
         body: { transcript, audioUrl: fileName },
       });
 
       if (error) throw error;
 
-      toast.success(`Memory saved for ${data.person_name || 'someone'}!`);
-      return data;
+      const review: ReviewData = {
+        extracted: data.extracted,
+        person_name: data.person_name,
+        auto_nudges: data.auto_nudges || [],
+        transcript,
+        audioUrl: fileName,
+      };
+
+      setReviewData(review);
+      return review;
     } catch (error: any) {
       console.error('Error processing voice note:', error);
       toast.error('Failed to process recording. Please try again.');
@@ -50,5 +95,35 @@ export const useProcessVoiceNote = () => {
     }
   }, [user]);
 
-  return { processVoiceNote, processing };
+  const saveMemory = useCallback(async (review: ReviewData) => {
+    if (!user) return null;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('save-memory', {
+        body: {
+          extracted: review.extracted,
+          transcript: review.transcript,
+          audioUrl: review.audioUrl,
+          auto_nudges: review.auto_nudges,
+        },
+      });
+
+      if (error) throw error;
+
+      const nudgeText = data.has_nudges ? ' · 🔔 Nudge set' : '';
+      toast.success(`Memory added to ${data.person_name}${nudgeText}`);
+      setReviewData(null);
+      return data;
+    } catch (error: any) {
+      console.error('Error saving memory:', error);
+      toast.error('Failed to save memory. Please try again.');
+      return null;
+    }
+  }, [user]);
+
+  const discardReview = useCallback(() => {
+    setReviewData(null);
+  }, []);
+
+  return { transcribeAndExtract, saveMemory, discardReview, processing, reviewData };
 };
