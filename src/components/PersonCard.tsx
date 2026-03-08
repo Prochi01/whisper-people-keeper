@@ -1,8 +1,9 @@
 import { Tables } from '@/integrations/supabase/types';
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
-import { MapPin, Building2, ChevronRight } from 'lucide-react';
+import { Building2, MapPin, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AVATAR_COLORS } from './BottomTabBar';
 
 interface PersonCardProps {
   person: Tables<'people'>;
@@ -11,8 +12,8 @@ interface PersonCardProps {
 
 const PersonCard = ({ person, index }: PersonCardProps) => {
   const navigate = useNavigate();
-
   const detail = person.company || person.location || (person.interests && person.interests.length > 0 ? person.interests[0] : null);
+  const color = AVATAR_COLORS[index % AVATAR_COLORS.length];
 
   return (
     <motion.button
@@ -22,8 +23,11 @@ const PersonCard = ({ person, index }: PersonCardProps) => {
       onClick={() => navigate(`/person/${person.id}`)}
       className="w-full text-left bg-card rounded-xl p-4 flex items-center gap-4 border border-border active:scale-[0.98] transition-transform"
     >
-      <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
-        <span className="text-lg font-display font-semibold text-secondary-foreground">
+      <div
+        className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-white"
+        style={{ backgroundColor: color }}
+      >
+        <span className="text-lg font-display font-semibold">
           {person.name.charAt(0).toUpperCase()}
         </span>
       </div>
