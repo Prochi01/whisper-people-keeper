@@ -40,9 +40,10 @@ const AppContent = () => {
     try { await startRecording(); } catch {}
   };
 
-  const handleSave = async () => {
+  const handleSave = async (draft: import('@/hooks/useProcessVoiceNote').ExtractedData, nudges: import('@/hooks/useProcessVoiceNote').AutoNudge[]) => {
     if (reviewData) {
-      const result = await saveMemory(reviewData);
+      const updatedReview = { ...reviewData, extracted: draft, auto_nudges: nudges };
+      const result = await saveMemory(updatedReview);
       if (result) setRefreshKey(k => k + 1);
     }
   };
