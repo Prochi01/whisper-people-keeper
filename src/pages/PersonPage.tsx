@@ -313,7 +313,6 @@ const PersonPage = () => {
                       {note.meeting_context}
                     </span>
                   )}
-                  )}
                 </motion.div>
               ))}
             </div>
