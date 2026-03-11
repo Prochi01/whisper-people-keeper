@@ -21,12 +21,9 @@ interface Nudge {
   auto?: boolean;
 }
 
-interface PersonWithContact extends Tables<'people'> {
+type PersonWithContact = Tables<'people'> & {
   nudges?: Nudge[];
-  phone?: string | null;
-  email?: string | null;
-  contact_linked?: boolean;
-}
+};
 
 const QUESTION_RULES: { pattern: RegExp; question: string | ((loc?: string | null) => string) }[] = [
   { pattern: /kids|children|child|baby/i, question: "How are the kids doing?" },
