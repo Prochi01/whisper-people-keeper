@@ -18,7 +18,9 @@ export type Database = {
         Row: {
           ai_summary: string | null
           company: string | null
+          contact_linked: boolean | null
           created_at: string
+          email: string | null
           id: string
           interests: string[] | null
           last_interaction: string
@@ -26,13 +28,16 @@ export type Database = {
           location: string | null
           name: string
           nudges: Json | null
+          phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           ai_summary?: string | null
           company?: string | null
+          contact_linked?: boolean | null
           created_at?: string
+          email?: string | null
           id?: string
           interests?: string[] | null
           last_interaction?: string
@@ -40,13 +45,16 @@ export type Database = {
           location?: string | null
           name: string
           nudges?: Json | null
+          phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           ai_summary?: string | null
           company?: string | null
+          contact_linked?: boolean | null
           created_at?: string
+          email?: string | null
           id?: string
           interests?: string[] | null
           last_interaction?: string
@@ -54,6 +62,7 @@ export type Database = {
           location?: string | null
           name?: string
           nudges?: Json | null
+          phone?: string | null
           updated_at?: string
           user_id?: string
         }

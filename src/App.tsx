@@ -15,8 +15,10 @@ import BottomTabBar from "./components/BottomTabBar";
 import RecordingOverlay from "./components/RecordingOverlay";
 import ProcessingOverlay from "./components/ProcessingOverlay";
 import ReviewScreen from "./components/ReviewScreen";
+import ContactLinker from "./components/ContactLinker";
+import FuzzyMatchConfirm from "./components/FuzzyMatchConfirm";
 import { useVoiceRecorder } from "./hooks/useVoiceRecorder";
-import { useProcessVoiceNote } from "./hooks/useProcessVoiceNote";
+import { useProcessVoiceNote, SaveResult } from "./hooks/useProcessVoiceNote";
 import { useState, useEffect } from "react";
 
 const queryClient = new QueryClient();
@@ -24,12 +26,12 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   const { session, loading } = useAuth();
   const { isRecording, duration, audioBlob, startRecording, stopRecording, cancelRecording, analyserNode } = useVoiceRecorder();
-  const { transcribeAndExtract, saveMemory, discardReview, processing, reviewData } = useProcessVoiceNote();
+  const { transcribeAndExtract, saveMemory, confirmFuzzyMatch, discardReview, processing, reviewData, pendingFuzzyMatch } = useProcessVoiceNote();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [contactLinkData, setContactLinkData] = useState<{ personId: string; personName: string } | null>(null);
 
-  const isOverlayActive = isRecording || processing || !!reviewData;
+  const isOverlayActive = isRecording || processing || !!reviewData || !!pendingFuzzyMatch;
 
-  // When recording stops and we have a blob, transcribe & extract
   useEffect(() => {
     if (audioBlob && !isRecording) {
       transcribeAndExtract(audioBlob);
@@ -44,7 +46,27 @@ const AppContent = () => {
     if (reviewData) {
       const updatedReview = { ...reviewData, extracted: draft, auto_nudges: nudges };
       const result = await saveMemory(updatedReview);
-      if (result) setRefreshKey(k => k + 1);
+      if (result && result.success && result.person_id) {
+        setRefreshKey(k => k + 1);
+        // Prompt contact linking if no contact linked yet
+        setContactLinkData({ personId: result.person_id, personName: result.person_name || draft.name });
+      }
+    }
+  };
+
+  const handleFuzzyConfirm = async () => {
+    const result = await confirmFuzzyMatch(true);
+    if (result && result.success && result.person_id) {
+      setRefreshKey(k => k + 1);
+      setContactLinkData({ personId: result.person_id, personName: result.person_name || '' });
+    }
+  };
+
+  const handleFuzzyCreateNew = async () => {
+    const result = await confirmFuzzyMatch(false);
+    if (result && result.success && result.person_id) {
+      setRefreshKey(k => k + 1);
+      setContactLinkData({ personId: result.person_id, personName: result.person_name || '' });
     }
   };
 
@@ -70,6 +92,28 @@ const AppContent = () => {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {pendingFuzzyMatch && (
+          <FuzzyMatchConfirm
+            existingName={pendingFuzzyMatch.fuzzyMatch.existing_name}
+            spokenName={pendingFuzzyMatch.fuzzyMatch.spoken_name}
+            onConfirm={handleFuzzyConfirm}
+            onCreateNew={handleFuzzyCreateNew}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {contactLinkData && (
+          <ContactLinker
+            personId={contactLinkData.personId}
+            personName={contactLinkData.personName}
+            onLinked={() => {}}
+            onClose={() => setContactLinkData(null)}
+          />
+        )}
+      </AnimatePresence>
+
       <Routes>
         <Route path="/" element={<HomePage refreshKey={refreshKey} />} />
         <Route path="/person/:id" element={<PersonPage />} />
@@ -78,7 +122,7 @@ const AppContent = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
 
-      {!isOverlayActive && <BottomTabBar onRecord={handleRecord} />}
+      {!isOverlayActive && !contactLinkData && <BottomTabBar onRecord={handleRecord} />}
     </>
   );
 };
