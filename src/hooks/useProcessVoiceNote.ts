@@ -28,6 +28,7 @@ export interface ReviewData {
   auto_nudges: AutoNudge[];
   transcript: string;
   audioUrl: string | null;
+  audioBlob: Blob | null;
 }
 
 export const useProcessVoiceNote = () => {
