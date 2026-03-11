@@ -100,11 +100,21 @@ export const useProcessVoiceNote = () => {
     if (!user) return null;
 
     try {
+      // Upload audio to the audio bucket if we have a blob
+      let storedAudioPath: string | null = null;
+      if (review.audioBlob) {
+        const audioPath = `voice-notes/${user.id}/${Date.now()}.webm`;
+        const { error: uploadError } = await supabase.storage.from('audio').upload(audioPath, review.audioBlob);
+        if (!uploadError) {
+          storedAudioPath = audioPath;
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('save-memory', {
         body: {
           extracted: review.extracted,
           transcript: review.transcript,
-          audioUrl: review.audioUrl,
+          audioUrl: storedAudioPath || review.audioUrl,
           auto_nudges: review.auto_nudges,
         },
       });
