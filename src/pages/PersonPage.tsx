@@ -86,7 +86,20 @@ const PersonPage = () => {
       supabase.from('voice_notes').select('*').eq('person_id', id).order('created_at', { ascending: false }),
     ]);
     if (personRes.data) setPerson(personRes.data as any);
-    if (notesRes.data) setNotes(notesRes.data);
+    if (notesRes.data) {
+      setNotes(notesRes.data);
+      // Generate signed URLs for notes that have audio
+      const urlMap: Record<string, string> = {};
+      await Promise.all(
+        notesRes.data
+          .filter(n => n.audio_url)
+          .map(async (n) => {
+            const { data } = await supabase.storage.from('audio').createSignedUrl(n.audio_url!, 3600);
+            if (data?.signedUrl) urlMap[n.id] = data.signedUrl;
+          })
+      );
+      setAudioUrls(urlMap);
+    }
     setLoading(false);
   };
 
