@@ -16,8 +16,12 @@ serve(async (req) => {
     const audio = formData.get("audio") as File;
     if (!audio) throw new Error("No audio file provided");
 
+    // Read the raw bytes and reconstruct as a proper Blob to preserve binary integrity
+    const arrayBuffer = await audio.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: audio.type || "audio/webm" });
+
     const whisperForm = new FormData();
-    whisperForm.append("file", audio, "audio.webm");
+    whisperForm.append("file", blob, "audio.webm");
     whisperForm.append("model", "whisper-1");
 
     const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
