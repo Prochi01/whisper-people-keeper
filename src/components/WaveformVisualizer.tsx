@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, forwardRef } from 'react';
 import { motion } from 'framer-motion';
 
 interface WaveformVisualizerProps {
@@ -6,7 +6,8 @@ interface WaveformVisualizerProps {
   isRecording: boolean;
 }
 
-const WaveformVisualizer = ({ analyserNode, isRecording }: WaveformVisualizerProps) => {
+const WaveformVisualizer = forwardRef<HTMLDivElement, WaveformVisualizerProps>(
+  ({ analyserNode, isRecording }, _ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
 
