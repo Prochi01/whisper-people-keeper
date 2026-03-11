@@ -74,6 +74,7 @@ const PersonPage = () => {
   const navigate = useNavigate();
   const [person, setPerson] = useState<(Tables<'people'> & { nudges?: Nudge[] }) | null>(null);
   const [notes, setNotes] = useState<Tables<'voice_notes'>[]>([]);
+  const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [showNudgeScheduler, setShowNudgeScheduler] = useState(false);
   const [showMerge, setShowMerge] = useState(false);
