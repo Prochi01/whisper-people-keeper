@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { ArrowLeft, MapPin, Building2, Heart, Calendar, Bell, GitMerge, ArrowRight } from 'lucide-react';
+import { ArrowLeft, MapPin, Building2, Heart, Calendar, Bell, GitMerge, ArrowRight, UserPlus, UserCheck, LinkIcon } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import InlineEdit from '@/components/InlineEdit';
 import AudioPlayer from '@/components/AudioPlayer';
+import ContactActions from '@/components/ContactActions';
+import ContactLinker from '@/components/ContactLinker';
 import NudgeScheduler from '@/components/NudgeScheduler';
 import MergeScreen from '@/components/MergeScreen';
 import { AVATAR_COLORS } from '@/components/BottomTabBar';
@@ -17,6 +19,13 @@ interface Nudge {
   isoDate: string;
   note: string;
   auto?: boolean;
+}
+
+interface PersonWithContact extends Tables<'people'> {
+  nudges?: Nudge[];
+  phone?: string | null;
+  email?: string | null;
+  contact_linked?: boolean;
 }
 
 const QUESTION_RULES: { pattern: RegExp; question: string | ((loc?: string | null) => string) }[] = [
@@ -72,12 +81,13 @@ const SwipeToDeleteBanner = ({ children, onDelete }: { children: React.ReactNode
 const PersonPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [person, setPerson] = useState<(Tables<'people'> & { nudges?: Nudge[] }) | null>(null);
+  const [person, setPerson] = useState<PersonWithContact | null>(null);
   const [notes, setNotes] = useState<Tables<'voice_notes'>[]>([]);
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [showNudgeScheduler, setShowNudgeScheduler] = useState(false);
   const [showMerge, setShowMerge] = useState(false);
+  const [showContactLinker, setShowContactLinker] = useState(false);
 
   const fetchData = async () => {
     if (!id) return;
@@ -88,7 +98,6 @@ const PersonPage = () => {
     if (personRes.data) setPerson(personRes.data as any);
     if (notesRes.data) {
       setNotes(notesRes.data);
-      // Generate signed URLs for notes that have audio
       const urlMap: Record<string, string> = {};
       await Promise.all(
         notesRes.data
@@ -107,7 +116,7 @@ const PersonPage = () => {
 
   const updateField = async (field: string, value: any) => {
     if (!person) return;
-    await supabase.from('people').update({ [field]: value }).eq('id', person.id);
+    await supabase.from('people').update({ [field]: value } as any).eq('id', person.id);
     setPerson(prev => prev ? { ...prev, [field]: value } : null);
   };
 
@@ -126,6 +135,17 @@ const PersonPage = () => {
   const handleDeleteNudge = async (index: number) => {
     const updated = nudges.filter((_, i) => i !== index);
     await updateField('nudges', updated);
+  };
+
+  const handleContactLinked = (phone: string | null, email: string | null) => {
+    setPerson(prev => prev ? { ...prev, phone, email, contact_linked: true } : null);
+  };
+
+  const handleUnlinkContact = async () => {
+    if (!person) return;
+    await supabase.from('people').update({ phone: null, email: null, contact_linked: false } as any).eq('id', person.id);
+    setPerson(prev => prev ? { ...prev, phone: null, email: null, contact_linked: false } : null);
+    toast.success('Contact unlinked');
   };
 
   const questions = person ? generateQuestions(notes, person) : [];
@@ -156,6 +176,14 @@ const PersonPage = () => {
         {showMerge && (
           <MergeScreen person={person} onClose={() => setShowMerge(false)} onMerged={() => { setShowMerge(false); fetchData(); }} />
         )}
+        {showContactLinker && (
+          <ContactLinker
+            personId={person.id}
+            personName={person.name}
+            onLinked={handleContactLinked}
+            onClose={() => setShowContactLinker(false)}
+          />
+        )}
       </AnimatePresence>
 
       {/* Header */}
@@ -166,6 +194,24 @@ const PersonPage = () => {
             <span className="text-sm">Back</span>
           </button>
           <div className="flex items-center gap-2">
+            {person.contact_linked ? (
+              <button
+                onClick={handleUnlinkContact}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium"
+                style={{ color: 'hsl(142 71% 35%)' }}
+              >
+                <UserCheck className="w-4 h-4" />
+                <span className="text-xs">Linked ✓</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowContactLinker(true)}
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground"
+                title="Link contact"
+              >
+                <UserPlus className="w-5 h-5" />
+              </button>
+            )}
             <button onClick={() => setShowNudgeScheduler(true)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground">
               <Bell className="w-5 h-5" />
             </button>
@@ -193,6 +239,13 @@ const PersonPage = () => {
             </p>
           </div>
         </div>
+
+        {/* Contact action buttons */}
+        {(person.phone || person.email) && (
+          <div className="mt-3 ml-20">
+            <ContactActions phone={person.phone} email={person.email} />
+          </div>
+        )}
       </header>
 
       <div className="px-5 space-y-4">

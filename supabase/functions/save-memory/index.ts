@@ -6,6 +6,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function fuzzyMatch(a: string, b: string): boolean {
+  const norm = (s: string) => s.toLowerCase().trim();
+  const aTokens = norm(a).split(" ");
+  const bTokens = norm(b).split(" ");
+  return aTokens[0] === bTokens[0] || norm(a) === norm(b);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -23,21 +30,41 @@ serve(async (req) => {
     if (userError || !user) throw new Error("Unauthorized");
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { extracted, transcript, audioUrl, auto_nudges } = await req.json();
+    const { extracted, transcript, audioUrl, auto_nudges, forceCreate } = await req.json();
 
     const personName = extracted.name || "Unknown";
 
-    // Check if person already exists
-    const { data: existingPeople } = await supabase
+    // Get all people for this user to do fuzzy matching
+    const { data: allPeople } = await supabase
       .from("people")
       .select("*")
-      .eq("user_id", user.id)
-      .ilike("name", `%${personName}%`);
+      .eq("user_id", user.id);
 
     let personId: string;
+    let matchType: "exact" | "fuzzy" | "none" = "none";
+    let matchedName: string | null = null;
 
-    if (existingPeople && existingPeople.length > 0) {
-      const existing = existingPeople[0];
+    // Find matches
+    let exactMatch = null;
+    let fuzzyMatchResult = null;
+
+    if (allPeople) {
+      for (const p of allPeople) {
+        const normA = personName.toLowerCase().trim();
+        const normB = p.name.toLowerCase().trim();
+        if (normA === normB) {
+          exactMatch = p;
+          break;
+        }
+        if (!fuzzyMatchResult && fuzzyMatch(personName, p.name)) {
+          fuzzyMatchResult = p;
+        }
+      }
+    }
+
+    if (exactMatch) {
+      // Exact match - merge directly
+      const existing = exactMatch;
       const mergedInterests = [...new Set([...(existing.interests || []), ...(extracted.interests || [])])];
       const mergedLifeEvents = [...new Set([...(existing.life_events || []), ...(extracted.life_events || [])])];
       const existingNudges = existing.nudges || [];
@@ -58,7 +85,25 @@ serve(async (req) => {
 
       if (updateError) throw updateError;
       personId = existing.id;
+      matchType = "exact";
+    } else if (fuzzyMatchResult && !forceCreate) {
+      // Fuzzy match found - return for confirmation
+      return new Response(
+        JSON.stringify({
+          success: false,
+          needs_confirmation: true,
+          fuzzy_match: {
+            existing_name: fuzzyMatchResult.name,
+            existing_id: fuzzyMatchResult.id,
+            spoken_name: personName,
+          },
+          // Echo back the input so the client can retry
+          echo: { extracted, transcript, audioUrl, auto_nudges },
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     } else {
+      // No match or forceCreate - create new person
       const { data: newPerson, error: insertError } = await supabase
         .from("people")
         .insert({
@@ -76,6 +121,33 @@ serve(async (req) => {
 
       if (insertError) throw insertError;
       personId = newPerson.id;
+      matchType = "none";
+    }
+
+    // If forceCreate was false but we got here via exact match or new, or forceCreate was for a fuzzy match merge
+    // Handle fuzzy match confirmed merge
+    if (forceCreate === false && fuzzyMatchResult) {
+      // User confirmed fuzzy match - merge into existing
+      const existing = fuzzyMatchResult;
+      const mergedInterests = [...new Set([...(existing.interests || []), ...(extracted.interests || [])])];
+      const mergedLifeEvents = [...new Set([...(existing.life_events || []), ...(extracted.life_events || [])])];
+      const existingNudges = existing.nudges || [];
+      const mergedNudges = [...existingNudges, ...(auto_nudges || [])];
+
+      await supabase
+        .from("people")
+        .update({
+          company: extracted.company || existing.company,
+          location: extracted.location || existing.location,
+          interests: mergedInterests,
+          life_events: mergedLifeEvents,
+          ai_summary: extracted.summary || existing.ai_summary,
+          last_interaction: new Date().toISOString(),
+          nudges: mergedNudges,
+        })
+        .eq("id", existing.id);
+
+      personId = existing.id;
     }
 
     // Create voice note
@@ -96,7 +168,13 @@ serve(async (req) => {
     const hasNudges = auto_nudges && auto_nudges.length > 0;
 
     return new Response(
-      JSON.stringify({ success: true, person_id: personId, person_name: personName, has_nudges: hasNudges }),
+      JSON.stringify({
+        success: true,
+        person_id: personId,
+        person_name: personName,
+        has_nudges: hasNudges,
+        contact_linked: false,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
