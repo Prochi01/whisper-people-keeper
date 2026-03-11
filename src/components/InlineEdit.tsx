@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, KeyboardEvent, forwardRef } from 'react';
 import { Pencil, Check, X } from 'lucide-react';
 
 interface InlineEditProps {
@@ -9,7 +9,8 @@ interface InlineEditProps {
   multiline?: boolean;
 }
 
-const InlineEdit = ({ value, onSave, className = '', placeholder = '', multiline = false }: InlineEditProps) => {
+const InlineEdit = forwardRef<HTMLDivElement, InlineEditProps>(
+  ({ value, onSave, className = '', placeholder = '', multiline = false }, _ref) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
