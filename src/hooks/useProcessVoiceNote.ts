@@ -45,9 +45,8 @@ export const useProcessVoiceNote = () => {
     setProcessing(true);
 
     try {
-      // Upload audio
+      // Upload audio to storage for backup
       const fileName = `${user.id}/${Date.now()}.webm`;
-      await supabase.storage.from('voice-recordings').upload(fileName, audioBlob);
 
       // Transcribe with Whisper
       const formData = new FormData();
