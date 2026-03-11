@@ -69,7 +69,9 @@ const WaveformVisualizer = forwardRef<HTMLDivElement, WaveformVisualizerProps>(
         className="w-full max-w-xs h-[120px]"
       />
     </motion.div>
-  );
-};
+  }
+);
+
+WaveformVisualizer.displayName = 'WaveformVisualizer';
 
 export default WaveformVisualizer;
