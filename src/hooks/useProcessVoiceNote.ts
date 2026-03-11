@@ -82,6 +82,7 @@ export const useProcessVoiceNote = () => {
         auto_nudges: data.auto_nudges || [],
         transcript,
         audioUrl: fileName,
+        audioBlob,
       };
 
       setReviewData(review);
