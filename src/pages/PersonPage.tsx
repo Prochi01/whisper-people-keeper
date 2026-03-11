@@ -305,10 +305,14 @@ const PersonPage = () => {
                     className="text-sm text-foreground leading-relaxed"
                     multiline
                   />
+                  {audioUrls[note.id] && (
+                    <AudioPlayer src={audioUrls[note.id]} />
+                  )}
                   {note.meeting_context && (
                     <span className="inline-block mt-1 text-xs bg-secondary text-secondary-foreground rounded-full px-2 py-0.5">
                       {note.meeting_context}
                     </span>
+                  )}
                   )}
                 </motion.div>
               ))}
