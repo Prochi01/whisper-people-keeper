@@ -6,6 +6,7 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { ArrowLeft, MapPin, Building2, Heart, Calendar, Bell, GitMerge, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import InlineEdit from '@/components/InlineEdit';
+import AudioPlayer from '@/components/AudioPlayer';
 import NudgeScheduler from '@/components/NudgeScheduler';
 import MergeScreen from '@/components/MergeScreen';
 import { AVATAR_COLORS } from '@/components/BottomTabBar';
