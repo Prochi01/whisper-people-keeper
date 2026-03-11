@@ -28,6 +28,7 @@ export interface ReviewData {
   auto_nudges: AutoNudge[];
   transcript: string;
   audioUrl: string | null;
+  audioBlob: Blob | null;
 }
 
 export const useProcessVoiceNote = () => {
@@ -44,9 +45,8 @@ export const useProcessVoiceNote = () => {
     setProcessing(true);
 
     try {
-      // Upload audio
+      // Upload audio to storage for backup
       const fileName = `${user.id}/${Date.now()}.webm`;
-      await supabase.storage.from('voice-recordings').upload(fileName, audioBlob);
 
       // Transcribe with Whisper
       const formData = new FormData();
@@ -82,6 +82,7 @@ export const useProcessVoiceNote = () => {
         auto_nudges: data.auto_nudges || [],
         transcript,
         audioUrl: fileName,
+        audioBlob,
       };
 
       setReviewData(review);
@@ -99,11 +100,21 @@ export const useProcessVoiceNote = () => {
     if (!user) return null;
 
     try {
+      // Upload audio to the audio bucket if we have a blob
+      let storedAudioPath: string | null = null;
+      if (review.audioBlob) {
+        const audioPath = `voice-notes/${user.id}/${Date.now()}.webm`;
+        const { error: uploadError } = await supabase.storage.from('audio').upload(audioPath, review.audioBlob);
+        if (!uploadError) {
+          storedAudioPath = audioPath;
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('save-memory', {
         body: {
           extracted: review.extracted,
           transcript: review.transcript,
-          audioUrl: review.audioUrl,
+          audioUrl: storedAudioPath || review.audioUrl,
           auto_nudges: review.auto_nudges,
         },
       });

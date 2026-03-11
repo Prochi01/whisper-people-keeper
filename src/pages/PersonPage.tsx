@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
@@ -6,6 +6,7 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { ArrowLeft, MapPin, Building2, Heart, Calendar, Bell, GitMerge, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import InlineEdit from '@/components/InlineEdit';
+import AudioPlayer from '@/components/AudioPlayer';
 import NudgeScheduler from '@/components/NudgeScheduler';
 import MergeScreen from '@/components/MergeScreen';
 import { AVATAR_COLORS } from '@/components/BottomTabBar';
@@ -73,6 +74,7 @@ const PersonPage = () => {
   const navigate = useNavigate();
   const [person, setPerson] = useState<(Tables<'people'> & { nudges?: Nudge[] }) | null>(null);
   const [notes, setNotes] = useState<Tables<'voice_notes'>[]>([]);
+  const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [showNudgeScheduler, setShowNudgeScheduler] = useState(false);
   const [showMerge, setShowMerge] = useState(false);
@@ -84,7 +86,20 @@ const PersonPage = () => {
       supabase.from('voice_notes').select('*').eq('person_id', id).order('created_at', { ascending: false }),
     ]);
     if (personRes.data) setPerson(personRes.data as any);
-    if (notesRes.data) setNotes(notesRes.data);
+    if (notesRes.data) {
+      setNotes(notesRes.data);
+      // Generate signed URLs for notes that have audio
+      const urlMap: Record<string, string> = {};
+      await Promise.all(
+        notesRes.data
+          .filter(n => n.audio_url)
+          .map(async (n) => {
+            const { data } = await supabase.storage.from('audio').createSignedUrl(n.audio_url!, 3600);
+            if (data?.signedUrl) urlMap[n.id] = data.signedUrl;
+          })
+      );
+      setAudioUrls(urlMap);
+    }
     setLoading(false);
   };
 
@@ -290,6 +305,9 @@ const PersonPage = () => {
                     className="text-sm text-foreground leading-relaxed"
                     multiline
                   />
+                  {audioUrls[note.id] && (
+                    <AudioPlayer src={audioUrls[note.id]} />
+                  )}
                   {note.meeting_context && (
                     <span className="inline-block mt-1 text-xs bg-secondary text-secondary-foreground rounded-full px-2 py-0.5">
                       {note.meeting_context}
