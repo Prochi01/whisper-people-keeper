@@ -5,12 +5,20 @@ interface ContactActionsProps {
   email?: string | null;
 }
 
+const isMobileDevice = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 const ContactActions = ({ phone, email }: ContactActionsProps) => {
-  if (!phone && !email) return null;
+  const mobile = isMobileDevice();
+
+  // On desktop: only show email button. On mobile: show all.
+  const showPhone = mobile && !!phone;
+  const showEmail = !!email;
+
+  if (!showPhone && !showEmail) return null;
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {phone && (
+      {showPhone && (
         <>
           <a
             href={`tel:${phone}`}
@@ -28,7 +36,7 @@ const ContactActions = ({ phone, email }: ContactActionsProps) => {
           </a>
         </>
       )}
-      {email && (
+      {showEmail && (
         <a
           href={`mailto:${email}`}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"

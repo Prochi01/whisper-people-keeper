@@ -48,8 +48,11 @@ const AppContent = () => {
       const result = await saveMemory(updatedReview);
       if (result && result.success && result.person_id) {
         setRefreshKey(k => k + 1);
-        // Prompt contact linking if no contact linked yet
-        setContactLinkData({ personId: result.person_id, personName: result.person_name || draft.name });
+        // Prompt contact linking only on mobile devices
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+          setContactLinkData({ personId: result.person_id, personName: result.person_name || draft.name });
+        }
       }
     }
   };
@@ -58,7 +61,10 @@ const AppContent = () => {
     const result = await confirmFuzzyMatch(true);
     if (result && result.success && result.person_id) {
       setRefreshKey(k => k + 1);
-      setContactLinkData({ personId: result.person_id, personName: result.person_name || '' });
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) {
+        setContactLinkData({ personId: result.person_id, personName: result.person_name || '' });
+      }
     }
   };
 
@@ -66,7 +72,10 @@ const AppContent = () => {
     const result = await confirmFuzzyMatch(false);
     if (result && result.success && result.person_id) {
       setRefreshKey(k => k + 1);
-      setContactLinkData({ personId: result.person_id, personName: result.person_name || '' });
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) {
+        setContactLinkData({ personId: result.person_id, personName: result.person_name || '' });
+      }
     }
   };
 
