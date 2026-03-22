@@ -20,6 +20,8 @@ export type Database = {
           company: string | null
           contact_linked: boolean | null
           created_at: string
+          custom_questions: string[] | null
+          dismissed_questions: string[] | null
           email: string | null
           id: string
           interests: string[] | null
@@ -37,6 +39,8 @@ export type Database = {
           company?: string | null
           contact_linked?: boolean | null
           created_at?: string
+          custom_questions?: string[] | null
+          dismissed_questions?: string[] | null
           email?: string | null
           id?: string
           interests?: string[] | null
@@ -54,6 +58,8 @@ export type Database = {
           company?: string | null
           contact_linked?: boolean | null
           created_at?: string
+          custom_questions?: string[] | null
+          dismissed_questions?: string[] | null
           email?: string | null
           id?: string
           interests?: string[] | null
