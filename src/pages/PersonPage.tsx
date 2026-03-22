@@ -191,23 +191,25 @@ const PersonPage = () => {
             <span className="text-sm">Back</span>
           </button>
           <div className="flex items-center gap-2">
-            {person.contact_linked ? (
-              <button
-                onClick={handleUnlinkContact}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium"
-                style={{ color: 'hsl(142 71% 35%)' }}
-              >
-                <UserCheck className="w-4 h-4" />
-                <span className="text-xs">Linked ✓</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowContactLinker(true)}
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground"
-                title="Link contact"
-              >
-                <UserPlus className="w-5 h-5" />
-              </button>
+            {/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && (
+              person.contact_linked ? (
+                <button
+                  onClick={handleUnlinkContact}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium"
+                  style={{ color: 'hsl(142 71% 35%)' }}
+                >
+                  <UserCheck className="w-4 h-4" />
+                  <span className="text-xs">Linked ✓</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowContactLinker(true)}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground"
+                  title="Link contact"
+                >
+                  <UserPlus className="w-5 h-5" />
+                </button>
+              )
             )}
             <button onClick={() => setShowNudgeScheduler(true)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground">
               <Bell className="w-5 h-5" />
