@@ -6,6 +6,7 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { ArrowLeft, MapPin, Building2, Heart, Calendar, Bell, GitMerge, ArrowRight, UserPlus, UserCheck, LinkIcon } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import InlineEdit from '@/components/InlineEdit';
+import AskThemCard from '@/components/AskThemCard';
 import AudioPlayer from '@/components/AudioPlayer';
 import ContactActions from '@/components/ContactActions';
 import ContactLinker from '@/components/ContactLinker';
@@ -277,19 +278,15 @@ const PersonPage = () => {
         )}
 
         {/* Ask them */}
-        {questions.length > 0 && (
-          <div className="rounded-xl p-4 bg-accent border border-primary/10">
-            <h3 className="text-sm font-medium text-accent-foreground uppercase tracking-wider mb-2">Ask them</h3>
-            <div className="space-y-2">
-              {questions.map((q, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <ArrowRight className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-foreground">{q}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <AskThemCard
+          personId={person.id}
+          aiQuestions={questions}
+          customQuestions={(person as any).custom_questions || []}
+          dismissedQuestions={(person as any).dismissed_questions || []}
+          onUpdate={(custom, dismissed) => {
+            setPerson(prev => prev ? { ...prev, custom_questions: custom, dismissed_questions: dismissed } as any : null);
+          }}
+        />
 
         {/* Details */}
         <div className="space-y-2">
