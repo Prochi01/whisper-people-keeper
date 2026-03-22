@@ -1,7 +1,7 @@
 import { Tables } from '@/integrations/supabase/types';
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
-import { Building2, MapPin, ChevronRight } from 'lucide-react';
+import { Building2, MapPin, ChevronRight, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AVATAR_COLORS } from './BottomTabBar';
 
@@ -14,6 +14,7 @@ const PersonCard = ({ person, index }: PersonCardProps) => {
   const navigate = useNavigate();
   const detail = person.company || person.location || (person.interests && person.interests.length > 0 ? person.interests[0] : null);
   const color = AVATAR_COLORS[index % AVATAR_COLORS.length];
+  const hasCustomQuestions = ((person as any).custom_questions?.length ?? 0) > 0;
 
   return (
     <motion.button
@@ -33,7 +34,14 @@ const PersonCard = ({ person, index }: PersonCardProps) => {
       </div>
 
       <div className="flex-1 min-w-0">
-        <h3 className="font-display font-semibold text-foreground truncate">{person.name}</h3>
+        <div className="flex items-center gap-1.5">
+          <h3 className="font-display font-semibold text-foreground truncate">{person.name}</h3>
+          {hasCustomQuestions && (
+            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center" title="Has saved questions">
+              <HelpCircle className="w-3 h-3 text-primary" />
+            </span>
+          )}
+        </div>
         {detail && (
           <p className="text-sm text-muted-foreground truncate flex items-center gap-1 mt-0.5">
             {person.company && <Building2 className="w-3 h-3 flex-shrink-0" />}
