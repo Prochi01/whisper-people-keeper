@@ -20,17 +20,64 @@ import FuzzyMatchConfirm from "./components/FuzzyMatchConfirm";
 import { useVoiceRecorder } from "./hooks/useVoiceRecorder";
 import { useProcessVoiceNote, SaveResult } from "./hooks/useProcessVoiceNote";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
 
+type OnboardingScreen = 'mic' | 'consent' | 'trial' | null;
+
 const AppContent = () => {
-  const { session, loading } = useAuth();
+  const { session, user, loading } = useAuth();
   const { isRecording, duration, audioBlob, startRecording, stopRecording, cancelRecording, analyserNode } = useVoiceRecorder();
   const { transcribeAndExtract, saveMemory, confirmFuzzyMatch, discardReview, processing, reviewData, pendingFuzzyMatch } = useProcessVoiceNote();
   const [refreshKey, setRefreshKey] = useState(0);
   const [contactLinkData, setContactLinkData] = useState<{ personId: string; personName: string } | null>(null);
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+  const [resumeScreen, setResumeScreen] = useState<OnboardingScreen>(null);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(false);
 
   const isOverlayActive = isRecording || processing || !!reviewData || !!pendingFuzzyMatch;
+
+  // Check onboarding status when user logs in
+  useEffect(() => {
+    if (!user) {
+      setOnboardingDone(null);
+      setResumeScreen(null);
+      return;
+    }
+
+    const checkOnboarding = async () => {
+      setCheckingOnboarding(true);
+      try {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('onboarding_complete, consent_given')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (profile?.onboarding_complete) {
+          setOnboardingDone(true);
+        } else if (profile?.consent_given) {
+          setOnboardingDone(false);
+          setResumeScreen('trial');
+        } else if (profile) {
+          setOnboardingDone(false);
+          setResumeScreen('consent');
+        } else {
+          // No profile at all — new user, show mic screen first
+          setOnboardingDone(false);
+          setResumeScreen('mic');
+        }
+      } catch {
+        // If check fails, assume onboarding done to not block
+        setOnboardingDone(true);
+      } finally {
+        setCheckingOnboarding(false);
+      }
+    };
+
+    checkOnboarding();
+  }, [user]);
 
   useEffect(() => {
     if (audioBlob && !isRecording) {
@@ -48,7 +95,6 @@ const AppContent = () => {
       const result = await saveMemory(updatedReview);
       if (result && result.success && result.person_id) {
         setRefreshKey(k => k + 1);
-        // Prompt contact linking only on mobile devices
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         if (isMobile) {
           setContactLinkData({ personId: result.person_id, personName: result.person_name || draft.name });
@@ -79,7 +125,7 @@ const AppContent = () => {
     }
   };
 
-  if (loading) {
+  if (loading || checkingOnboarding) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -87,8 +133,23 @@ const AppContent = () => {
     );
   }
 
+  // Not logged in — show welcome/auth screens
   if (!session) {
     return <AuthPage />;
+  }
+
+  // Logged in but onboarding not complete — show remaining onboarding screens
+  if (onboardingDone === false && resumeScreen) {
+    return (
+      <AuthPage
+        initialUser={user}
+        resumeScreen={resumeScreen}
+        onOnboardingComplete={() => {
+          setOnboardingDone(true);
+          setResumeScreen(null);
+        }}
+      />
+    );
   }
 
   return (
