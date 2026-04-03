@@ -59,7 +59,7 @@ const AuthPage = () => {
           >
             <Sparkles className="w-8 h-8 text-primary-foreground" />
           </motion.div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Nudgy</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground">Prochi</h1>
           <p className="text-muted-foreground mt-2">Your second brain for people</p>
         </div>
 

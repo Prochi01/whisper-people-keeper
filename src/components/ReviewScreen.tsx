@@ -121,7 +121,7 @@ const ReviewScreen = ({ reviewData, onSave, onDiscard }: ReviewScreenProps) => {
           <div className="rounded-xl p-4 mb-4 border" style={{ backgroundColor: 'hsl(38 92% 95%)', borderColor: 'hsl(38 92% 80%)' }}>
             <div className="flex items-center gap-2 mb-2">
               <Bell className="w-4 h-4" style={{ color: 'hsl(38 92% 40%)' }} />
-              <span className="text-sm font-medium font-display" style={{ color: 'hsl(38 92% 30%)' }}>Nudgy detected</span>
+              <span className="text-sm font-medium font-display" style={{ color: 'hsl(38 92% 30%)' }}>Prochi detected</span>
             </div>
             {draftNudges.map((nudge, idx) => (
               <div key={idx} className="mt-1 flex items-start justify-between gap-2">
