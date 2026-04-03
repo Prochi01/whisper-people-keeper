@@ -36,7 +36,7 @@ const HomePage = ({ refreshKey }: HomePageProps) => {
         <div>
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
-            <h1 className="text-2xl font-display font-bold text-foreground">Nudgy</h1>
+            <h1 className="text-2xl font-display font-bold text-foreground">Prochi</h1>
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">Your people memory</p>
         </div>
