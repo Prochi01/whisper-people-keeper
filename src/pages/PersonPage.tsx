@@ -247,12 +247,13 @@ const PersonPage = () => {
         {/* Ask them */}
         <AskThemCard
           personId={person.id}
-          aiQuestions={questions}
+          notes={notes}
+          name={person.name}
+          company={person.company}
           customQuestions={(person as any).custom_questions || []}
           dismissedQuestions={(person as any).dismissed_questions || []}
-          onUpdate={(custom, dismissed) => {
-            setPerson(prev => prev ? { ...prev, custom_questions: custom, dismissed_questions: dismissed } as any : null);
-          }}
+          onUpdateCustomQuestions={(q) => setPerson(prev => prev ? { ...prev, custom_questions: q } as any : null)}
+          onUpdateDismissedQuestions={(q) => setPerson(prev => prev ? { ...prev, dismissed_questions: q } as any : null)}
         />
 
         {/* Details */}
