@@ -26,38 +26,6 @@ type PersonWithContact = Tables<'people'> & {
   nudges?: Nudge[];
 };
 
-const QUESTION_RULES: { pattern: RegExp; question: string | ((loc?: string | null) => string) }[] = [
-  { pattern: /kids|children|child|baby/i, question: "How are the kids doing?" },
-  { pattern: /pregnant|expecting/i, question: "How's the new baby?" },
-  { pattern: /daughter|son|birthday/i, question: "How's your daughter doing — wasn't her birthday coming up?" },
-  { pattern: /moved offices|new office/i, question: "How's the new office settling in?" },
-  { pattern: /launch|launching/i, question: "How did the launch go?" },
-  { pattern: /fundrais|funding|raise/i, question: "Any updates on the fundraise?" },
-  { pattern: /hiring|recruit/i, question: "How's the hiring going?" },
-  { pattern: /surf/i, question: "Been surfing lately?" },
-  { pattern: /moved to|moving to|relocat/i, question: (loc) => `Settling in well in ${loc || 'the new place'}?` },
-  { pattern: /marathon|running/i, question: "Still keeping up with the running?" },
-  { pattern: /travel|trip/i, question: "How was the trip?" },
-];
-
-function generateQuestions(notes: Tables<'voice_notes'>[], person: Tables<'people'>): string[] {
-  const allText = notes.map(n => n.transcript || '').join(' ');
-  const questions: string[] = [];
-
-  for (const rule of QUESTION_RULES) {
-    if (questions.length >= 3) break;
-    if (rule.pattern.test(allText)) {
-      const q = typeof rule.question === 'function' ? rule.question(person.location) : rule.question;
-      questions.push(q);
-    }
-  }
-
-  if (questions.length === 0 && person.company) {
-    questions.push(`How are things going at ${person.company}?`);
-  }
-
-  return questions.slice(0, 3);
-}
 
 const SwipeToDeleteBanner = ({ children, onDelete }: { children: React.ReactNode; onDelete: () => void }) => (
   <div className="relative overflow-hidden rounded-xl">
