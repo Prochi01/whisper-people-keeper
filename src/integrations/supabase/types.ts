@@ -74,6 +74,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          consent_date: string | null
+          consent_given: boolean | null
+          created_at: string | null
+          id: string
+          onboarding_complete: boolean | null
+          trial_started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          consent_date?: string | null
+          consent_given?: boolean | null
+          created_at?: string | null
+          id?: string
+          onboarding_complete?: boolean | null
+          trial_started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          consent_date?: string | null
+          consent_given?: boolean | null
+          created_at?: string | null
+          id?: string
+          onboarding_complete?: boolean | null
+          trial_started_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       voice_notes: {
         Row: {
           audio_url: string | null
