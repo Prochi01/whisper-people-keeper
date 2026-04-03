@@ -114,7 +114,6 @@ const PersonPage = () => {
     toast.success('Contact unlinked');
   };
 
-  const questions = person ? generateQuestions(notes, person) : [];
   const latestNote = notes[0];
 
   if (loading) {
