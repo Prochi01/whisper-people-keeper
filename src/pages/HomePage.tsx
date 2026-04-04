@@ -12,7 +12,7 @@ interface HomePageProps {
 }
 
 const HomePage = ({ refreshKey }: HomePageProps) => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [people, setPeople] = useState<Tables<'people'>[]>([]);
   const [loading, setLoading] = useState(true);
