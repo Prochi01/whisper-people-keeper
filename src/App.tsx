@@ -10,6 +10,7 @@ import HomePage from "./pages/HomePage";
 import PersonPage from "./pages/PersonPage";
 import PeoplePage from "./pages/PeoplePage";
 import TimelinePage from "./pages/TimelinePage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 import BottomTabBar from "./components/BottomTabBar";
 import RecordingOverlay from "./components/RecordingOverlay";
@@ -189,6 +190,7 @@ const AppContent = () => {
         <Route path="/person/:id" element={<PersonPage />} />
         <Route path="/people" element={<PeoplePage refreshKey={refreshKey} />} />
         <Route path="/timeline" element={<TimelinePage refreshKey={refreshKey} />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 

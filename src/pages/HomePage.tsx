@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Tables } from '@/integrations/supabase/types';
 import { motion } from 'framer-motion';
-import { Mic, Sparkles, LogOut } from 'lucide-react';
+import { Mic, Sparkles } from 'lucide-react';
 import PersonCard from '@/components/PersonCard';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,7 +12,7 @@ interface HomePageProps {
 }
 
 const HomePage = ({ refreshKey }: HomePageProps) => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [people, setPeople] = useState<Tables<'people'>[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,9 +40,6 @@ const HomePage = ({ refreshKey }: HomePageProps) => {
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">Your people memory</p>
         </div>
-        <button onClick={signOut} className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
-          <LogOut className="w-5 h-5" />
-        </button>
       </header>
 
       {/* Main Record Button */}
