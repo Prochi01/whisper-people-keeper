@@ -17,7 +17,7 @@ const BottomTabBar = ({ onRecord }: BottomTabBarProps) => {
     { icon: Users, label: 'People', path: '/people' },
     { icon: null, label: 'Record', path: null }, // center placeholder
     { icon: Clock, label: 'Timeline', path: '/timeline' },
-    { icon: LayoutGrid, label: 'More', path: '/more' },
+    { icon: LayoutGrid, label: 'More', path: '/settings' },
   ];
 
   return (

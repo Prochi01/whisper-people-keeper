@@ -40,9 +40,6 @@ const HomePage = ({ refreshKey }: HomePageProps) => {
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">Your people memory</p>
         </div>
-        <button onClick={signOut} className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
-          <LogOut className="w-5 h-5" />
-        </button>
       </header>
 
       {/* Main Record Button */}

@@ -190,6 +190,7 @@ const AppContent = () => {
         <Route path="/person/:id" element={<PersonPage />} />
         <Route path="/people" element={<PeoplePage refreshKey={refreshKey} />} />
         <Route path="/timeline" element={<TimelinePage refreshKey={refreshKey} />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 
