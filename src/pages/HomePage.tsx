@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Tables } from '@/integrations/supabase/types';
 import { motion } from 'framer-motion';
-import { Mic, Sparkles, LogOut } from 'lucide-react';
+import { Mic, Sparkles } from 'lucide-react';
 import PersonCard from '@/components/PersonCard';
 import { useNavigate } from 'react-router-dom';
 
