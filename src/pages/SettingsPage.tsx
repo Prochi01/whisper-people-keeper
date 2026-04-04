@@ -157,31 +157,35 @@ const SettingsPage = () => {
       </div>
 
       {/* Delete confirmation */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete your account?</DialogTitle>
-            <DialogDescription className="space-y-2 pt-2">
-              <span className="block">This will permanently delete:</span>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>All your memories and notes</li>
-                <li>All your people and profiles</li>
-                <li>All your nudges and reminders</li>
-                <li>Your audio recordings</li>
-              </ul>
-              <span className="block font-medium text-destructive">This cannot be undone.</span>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={deleting}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleting}>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 pt-2">
+                <span className="block">This will permanently delete:</span>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>All your memories and notes</li>
+                  <li>All your people and profiles</li>
+                  <li>All your nudges and reminders</li>
+                  <li>Your audio recordings</li>
+                </ul>
+                <span className="block font-medium text-destructive">This cannot be undone.</span>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+            >
               {deleting ? 'Deleting…' : 'Delete my account'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
