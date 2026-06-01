@@ -102,8 +102,32 @@ serve(async (req) => {
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    } else if (fuzzyMatchResult && forceCreate === false) {
+      // User confirmed fuzzy match - merge into existing
+      const existing = fuzzyMatchResult;
+      const mergedInterests = [...new Set([...(existing.interests || []), ...(extracted.interests || [])])];
+      const mergedLifeEvents = [...new Set([...(existing.life_events || []), ...(extracted.life_events || [])])];
+      const existingNudges = existing.nudges || [];
+      const mergedNudges = [...existingNudges, ...(auto_nudges || [])];
+
+      const { error: updateError } = await supabase
+        .from("people")
+        .update({
+          company: extracted.company || existing.company,
+          location: extracted.location || existing.location,
+          interests: mergedInterests,
+          life_events: mergedLifeEvents,
+          ai_summary: extracted.summary || existing.ai_summary,
+          last_interaction: new Date().toISOString(),
+          nudges: mergedNudges,
+        })
+        .eq("id", existing.id);
+
+      if (updateError) throw updateError;
+      personId = existing.id;
+      matchType = "fuzzy";
     } else {
-      // No match or forceCreate - create new person
+      // No match or forceCreate=true - create new person
       const { data: newPerson, error: insertError } = await supabase
         .from("people")
         .insert({
@@ -124,31 +148,6 @@ serve(async (req) => {
       matchType = "none";
     }
 
-    // If forceCreate was false but we got here via exact match or new, or forceCreate was for a fuzzy match merge
-    // Handle fuzzy match confirmed merge
-    if (forceCreate === false && fuzzyMatchResult) {
-      // User confirmed fuzzy match - merge into existing
-      const existing = fuzzyMatchResult;
-      const mergedInterests = [...new Set([...(existing.interests || []), ...(extracted.interests || [])])];
-      const mergedLifeEvents = [...new Set([...(existing.life_events || []), ...(extracted.life_events || [])])];
-      const existingNudges = existing.nudges || [];
-      const mergedNudges = [...existingNudges, ...(auto_nudges || [])];
-
-      await supabase
-        .from("people")
-        .update({
-          company: extracted.company || existing.company,
-          location: extracted.location || existing.location,
-          interests: mergedInterests,
-          life_events: mergedLifeEvents,
-          ai_summary: extracted.summary || existing.ai_summary,
-          last_interaction: new Date().toISOString(),
-          nudges: mergedNudges,
-        })
-        .eq("id", existing.id);
-
-      personId = existing.id;
-    }
 
     // Create voice note
     const { error: noteError } = await supabase
