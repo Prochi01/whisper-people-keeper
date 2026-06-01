@@ -86,7 +86,7 @@ serve(async (req) => {
       if (updateError) throw updateError;
       personId = existing.id;
       matchType = "exact";
-    } else if (fuzzyMatchResult && !forceCreate) {
+    } else if (fuzzyMatchResult && forceCreate === undefined) {
       // Fuzzy match found - return for confirmation
       return new Response(
         JSON.stringify({
